@@ -3,13 +3,11 @@
 #include <ArduinoJson.h>
 WiFiMulti wifiMulti;
 
-const char* ssid = "home";
-const char* password = "DFGmko987532!";
 int  intervallInMS = 0;
 int intervall = 0;
 //Your Domain name with URL path or IP address with path
-const char* serverName = "http://192.168.0.186:3000/api/arduino";
-const char* beepServer = "http://192.168.0.186:3000/api/beep";
+const char* serverName = "api";
+const char* beepServer = "api 2";
 
 void setup() {
   pinMode(2, OUTPUT);
@@ -32,7 +30,7 @@ bool WiFi_Init(){
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(1000);
-  wifiMulti.addAP("home", "DFGmko987532!");
+  wifiMulti.addAP("wifi", "password"); // replac with your wifi name and your wifi password
   Serial.print("Connecting to WiFi ");
   if(wifiMulti.run() == WL_CONNECTED) {
     digitalWrite(27, HIGH);
