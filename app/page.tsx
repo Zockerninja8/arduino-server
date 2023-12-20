@@ -10,7 +10,6 @@ export default function Home() {
   const [ledOn,setLedOn] = useState(false);
   const [useIntervall, setUseIntervall] = useState(false);
   const [intervall,setIntervall] = useState(0);
-  const [beep, setBeep] = useState(false);
 
   function handleSaveSettings(){
     axios.post('/api/arduino', {
@@ -27,7 +26,15 @@ export default function Home() {
   }
 
   function makeBeep(){
-
+    axios.post('/api/beep', {
+      put: true
+    })
+    .then(function (response) {
+      console.log(response);
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
   }
 
   const handleChange = (event: Event, newValue: number | number[]) => {

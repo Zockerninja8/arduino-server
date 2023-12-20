@@ -2,6 +2,9 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
+move the code from thisfolder: Upload_This_Code_to_the_Arduino to your Aduino.
+Download all included libarys, then switch back to tje other code.
+
 First, run the development server:
 
 ```bash

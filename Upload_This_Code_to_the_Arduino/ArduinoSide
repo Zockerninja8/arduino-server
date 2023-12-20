@@ -1,0 +1,162 @@
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+WiFiMulti wifiMulti;
+
+const char* ssid = "home";
+const char* password = "DFGmko987532!";
+int  intervallInMS = 0;
+int intervall = 0;
+//Your Domain name with URL path or IP address with path
+const char* serverName = "http://192.168.0.186:3000/api/arduino";
+const char* beepServer = "http://192.168.0.186:3000/api/beep";
+
+void setup() {
+  pinMode(2, OUTPUT);
+  pinMode(27, OUTPUT);
+  pinMode(4, OUTPUT);
+  Serial.begin(921600);
+  WiFi_Init();
+}
+
+void loop() {
+  
+  DynamicJsonDocument doc = httpGETRequest(serverName);
+  setLedOnState(doc);
+  setLedInterval(doc);
+  //runBeep(beepServer);
+
+}
+
+bool WiFi_Init(){
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(1000);
+  wifiMulti.addAP("home", "DFGmko987532!");
+  Serial.print("Connecting to WiFi ");
+  if(wifiMulti.run() == WL_CONNECTED) {
+    digitalWrite(27, HIGH);
+    delay(250);
+    digitalWrite(27, LOW);
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.printf("Connected to %s\n", WiFi.SSID().c_str());
+    Serial.print("IP address: "); Serial.println(WiFi.localIP());
+    return true;
+  }
+  return false;
+}
+
+DynamicJsonDocument doc(1024);
+bool ranOnce = false;
+unsigned long httpRuntime = 0;
+DynamicJsonDocument httpGETRequest(const char* serverName) {
+
+  unsigned long current = millis();
+  if(current - httpRuntime > 1000 || !ranOnce){
+    httpRuntime = current;
+    ranOnce = true;
+      
+    WiFiClient client;
+    HTTPClient http;
+      
+    http.begin(client, serverName);
+
+    int httpResponseCode = http.GET();
+    
+    String payload = "{}";
+   
+    if (httpResponseCode == 200) {
+      payload = http.getString();
+      Serial.print(payload+"\n"); 
+      digitalWrite(4, LOW);
+    }
+    else {
+      digitalWrite(4, HIGH);
+      Serial.print("Error code: ");
+      Serial.println(httpResponseCode);
+    }
+
+    deserializeJson(doc, payload);
+  }
+
+  return doc;
+
+}
+
+DynamicJsonDocument beepDoc(1024);
+bool beepRanOnce = false;
+unsigned long httpBeepRuntime = 0;
+void runBeep(const char* beepServer) {
+
+  unsigned long current = millis();
+  if(current - httpBeepRuntime > 1000 || !beepRanOnce){
+    httpBeepRuntime = current;
+    beepRanOnce = true;
+      
+    WiFiClient client;
+    HTTPClient http;
+      
+    http.begin(client, serverName);
+
+    int httpResponseCode = http.POST("{ \"fetch\": true }");
+    String payload = "{}";
+   
+    if (httpResponseCode == 200) {
+      payload = http.getString();
+      Serial.print(payload+"\n"); 
+      digitalWrite(4, LOW);
+    }
+    else {
+      digitalWrite(4, HIGH);
+      Serial.print("Error code: ");
+      Serial.println(httpResponseCode);
+    }
+
+    deserializeJson(doc, payload);
+  }
+  
+  int beepsCount = doc["beepsCount"];
+  
+}
+
+
+void setLedOnState(DynamicJsonDocument doc){
+  bool useIntervall = doc["useIntervall"];
+  if(useIntervall){
+    return;
+  }
+  
+  const bool ledOn = doc["ledOn"];
+  if(ledOn) {
+    digitalWrite(2, HIGH);
+  }
+  else{
+    digitalWrite(2, LOW);
+  }
+  
+}
+
+bool isLedCurrentlyOn = false;
+unsigned long runtime = 0;
+void setLedInterval(DynamicJsonDocument doc){
+  bool useIntervall = doc["useIntervall"];
+  if(!useIntervall){
+    return;
+  }
+
+  unsigned long current = millis();
+  int intervall = doc["intervall"];
+  if(current - runtime > intervall * 1000 && !isLedCurrentlyOn){
+    runtime = current;
+    isLedCurrentlyOn = true;
+    digitalWrite(2, HIGH);
+  }
+
+  if(current - runtime > 1000 && isLedCurrentlyOn){
+    runtime = current;
+    isLedCurrentlyOn = false;
+    digitalWrite(2, LOW);
+  }
+
+}
